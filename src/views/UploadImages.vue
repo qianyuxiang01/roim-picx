@@ -54,7 +54,18 @@
 				</div>
 			</div>
 
-			<div class="md:col-span-5 col-span-8">
+      <div class="md:col-span-2 col-span-8">
+        <el-select v-model="selectedPrefix" placeholder="选择目录" size="large" class="w-full h-10">
+          <el-option
+              v-for="item in prefixes"
+              :key="item"
+              :label="item"
+              :value="item"
+          />
+        </el-select>
+      </div>
+
+			<div class="md:col-span-3 col-span-8">
 				<div class="w-full h-10 bg-slate-200 leading-10 px-4 text-center md:text-left">
 					已选择 {{ convertedImages.length }} 张，共 {{ formatBytes(imagesTotalSize) }}
 				</div>
@@ -106,11 +117,11 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 import LoadingOverlay from '../components/LoadingOverlay.vue'
 import formatBytes from '../utils/format-bytes'
 import {ElNotification as elNotify } from 'element-plus'
-import { requestUploadImages } from '../utils/request'
+import { requestUploadImages, requestListImages } from '../utils/request'
 import { useRouter } from 'vue-router'
 import ImageBox from '../components/ImageBox.vue'
 import ResultList from '../components/ResultList.vue'
-import type { ConvertedImage, ImgItem } from '../utils/types'
+import type { ConvertedImage, ImgItem, ImgReq } from '../utils/types'
 const convertedImages = ref<ConvertedImage[]>([])
 const imgResultList = ref<ImgItem[]>([])
 const imagesTotalSize = computed(() =>
@@ -121,6 +132,26 @@ const imageSizeLimit = 20 * 1024 * 1024
 const input = ref<HTMLInputElement>()
 const loading = ref(false)
 const router = useRouter()
+const prefixes = ref<String[]>([])
+const selectedPrefix = ref<String>('/')
+
+const listImages = () => {
+	loading.value = true
+	requestListImages(<ImgReq> {
+    limit: 100,
+    delimiter: '/'
+  }).then((data) => {
+    if (data.prefixes && data.prefixes.length) {
+      prefixes.value = ['/', ...data.prefixes]
+    } else {
+      prefixes.value = ['/']
+    }
+  }).catch(() => {})
+		.finally(() => {
+			loading.value = false
+		})
+}
+
 
 const onInputChange = () => {
 	appendConvertedImages(input.value?.files)
@@ -134,6 +165,7 @@ const onPaste = (e: ClipboardEvent) => {
 
 onMounted(() => {
 	document.onpaste = onPaste
+  listImages()
 })
 
 onUnmounted(() => {
@@ -192,6 +224,9 @@ const uploadImages = () => {
 	for (let item of convertedImages.value) {
 		formData.append('files', item.file)
 	}
+  if (selectedPrefix.value !== '/') {
+    formData.append('prefix', selectedPrefix.value as string)
+  }
 
 	requestUploadImages(formData)
 		.then((res) => {

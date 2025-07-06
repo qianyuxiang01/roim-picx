@@ -91,6 +91,7 @@ router.post('/list', auth, async (req : Request, env : Env) => {
 router.post('/upload',  auth, async (req: Request, env : Env) => {
     const files = await req.formData()
     const images = files.getAll("files")
+    const prefix = files.get("prefix") as string
     const errs = []
     const urls = Array<ImgItem>()
     for (let item of images) {
@@ -100,7 +101,10 @@ router.post('/upload',  auth, async (req: Request, env : Env) => {
             continue
         }
         const time = new Date().getTime()
-        const filename = await getFileName(fileType, time)
+        let filename = await getFileName(fileType, time)
+        if (prefix) {
+            filename = `${prefix}${filename}`
+        }
         const header = new Headers()
         header.set("content-type", fileType)
         header.set("content-length", `${item.size}`)
