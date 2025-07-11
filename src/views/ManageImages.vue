@@ -10,7 +10,7 @@
 				</div>
 			</div>
       <div class="flex items-center justify-start">
-        <font-awesome-icon :icon="faFolderPlus" class="text-xl cursor-pointer text-3xl text-amber-300 mr-2" @click="addFolder" />
+        <font-awesome-icon v-if="isAuthenticated" :icon="faFolderPlus" class="text-xl cursor-pointer text-3xl text-amber-300 mr-2" @click="addFolder" />
         <font-awesome-icon
             :icon="faRedoAlt"
             class="text-xl cursor-pointer text-indigo-400"
@@ -38,6 +38,7 @@
             :size="item.size"
 						@delete="deleteImage(item.key)"
 						mode="uploaded"
+						:show-delete="isAuthenticated"
 					/>
 				</div>
 			</transition-group>
@@ -55,11 +56,13 @@ import ImageBox from '../components/ImageBox.vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import { faRedoAlt, faFolder, faFolderPlus } from '@fortawesome/free-solid-svg-icons'
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
+import storage from '../utils/storage';
 
 const loading = ref(false)
 const delimiter = ref('/')
 const uploadedImages = ref<ImgItem[]>([])
 const prefixes = ref<String[]>([])
+const isAuthenticated = ref(false)
 const imagesTotalSize = computed(() =>
     uploadedImages.value.reduce((total, item) => total + item.size, 0)
 )
@@ -111,6 +114,7 @@ const listImages = () => {
 }
 
 onMounted(() => {
+	isAuthenticated.value = !!storage.local.get('auth-token');
 	listImages()
 })
 

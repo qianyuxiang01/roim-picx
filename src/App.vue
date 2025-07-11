@@ -24,6 +24,7 @@
 						</div>
 
 						<div
+							v-if="isAuthenticated"
 							:class="{
 								'bg-rose-300': $route.path === '/'
 							}"
@@ -55,12 +56,22 @@ import { faCog, faUpload } from '@fortawesome/free-solid-svg-icons'
 import { useRouter } from 'vue-router'
 import { ElScrollbar, ElConfigProvider } from 'element-plus'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
+import { ref, onMounted } from 'vue'
+import storage from './utils/storage'
 
 const repoLink = 'https://roim.app'
 const repoName = 'roim-picx'
 const appName = 'PICX'
+const isAuthenticated = ref(false)
 
 document.title = appName
 
 const router = useRouter()
+
+onMounted(() => {
+	isAuthenticated.value = !!storage.local.get('auth-token')
+	window.addEventListener('auth-success', () => {
+		isAuthenticated.value = true
+	})
+})
 </script>

@@ -116,12 +116,14 @@ import { faUpload } from '@fortawesome/free-solid-svg-icons'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import LoadingOverlay from '../components/LoadingOverlay.vue'
 import formatBytes from '../utils/format-bytes'
-import {ElNotification as elNotify } from 'element-plus'
+import {ElNotification as elNotify, ElMessageBox } from 'element-plus'
 import { requestUploadImages, requestListImages } from '../utils/request'
 import { useRouter } from 'vue-router'
 import ImageBox from '../components/ImageBox.vue'
 import ResultList from '../components/ResultList.vue'
 import type { ConvertedImage, ImgItem, ImgReq } from '../utils/types'
+import storage from '../utils/storage'
+
 const convertedImages = ref<ConvertedImage[]>([])
 const imgResultList = ref<ImgItem[]>([])
 const imagesTotalSize = computed(() =>
@@ -217,9 +219,8 @@ const removeImage = (tmpSrc: string) => {
 	URL.revokeObjectURL(tmpSrc)
 }
 
-const uploadImages = () => {
+const doUpload = () => {
 	loading.value = true
-
 	const formData = new FormData()
 	for (let item of convertedImages.value) {
 		formData.append('files', item.file)
@@ -239,13 +240,29 @@ const uploadImages = () => {
 			})
 			convertedImages.value = []
       imgResultList.value = res
-      // console.log(res)
-			// router.push('/')
 		})
 		.catch(() => {})
 		.finally(() => {
 			loading.value = false
 		})
+}
+
+const uploadImages = () => {
+	const token = storage.local.get('auth-token')
+	if (!token) {
+		ElMessageBox.prompt('请输入Token', '授权', {
+			confirmButtonText: '确定',
+			cancelButtonText: '取消',
+			inputPattern: /\S/,
+			inputErrorMessage: 'Token不能为空',
+		}).then(({ value }) => {
+			storage.local.set('auth-token', value)
+			window.dispatchEvent(new CustomEvent('auth-success'))
+			doUpload()
+		}).catch(() => {})
+	} else {
+		doUpload()
+	}
 }
 </script>
 

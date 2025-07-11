@@ -53,6 +53,7 @@
 					</el-tooltip>
 					<el-divider direction="vertical" class="h-full" />
 					<el-popconfirm
+						v-if="showDelete"
 						title="确认删除图片吗？"
 						confirm-button-type="danger"
 						@confirm="
@@ -90,6 +91,7 @@ const props = defineProps<{
 	name: string
 	size: number
 	mode: 'converted' | 'uploaded'
+	showDelete?: boolean
 	uploadedAt?: number
 	expiresAt?: number
 }>()
