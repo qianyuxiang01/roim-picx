@@ -44,46 +44,39 @@ router.post('/checkToken', async (req : Request, env : Env) => {
     return json(Ok(true))
 })
 
-// list image
-router.post('/list', auth, async (req : Request, env : Env) => {
-    const data = await req.json() as ImgReq
-    if (!data.limit) {
-        data.limit = 10
+// list image by path
+router.get('/list/:folder*', auth, async (req : Request, env : Env) => {
+    const { params } = req
+    const url = new URL(req.url)
+
+    let prefix = params.folder
+    const limit = Number(url.searchParams.get('limit')) || 100
+    const cursor = url.searchParams.get('cursor') || undefined
+
+    const options: R2ListOptions = {
+        limit: Math.min(limit, 100),
+        cursor,
+        delimiter: '/',
     }
-    if (data.limit > 100) {
-        data.limit = 100
+    if (prefix) {
+        options.prefix = prefix.endsWith('/') ? prefix : `${prefix}/`
     }
-    if (!data.delimiter) {
-        data.delimiter = "/"
-    }
-    let include = undefined
-    if (data.delimiter != "/") {
-        include = data.delimiter
-    }
-    // console.log(include)
-    const options = <R2ListOptions>{
-        limit: data.limit,
-        cursor: data.cursor,
-        delimiter: data.delimiter,
-        prefix: include
-    }
+
     const list = await env.PICX.list(options)
-    // console.log(list)
-    const truncated = list.truncated ? list.truncated : false
-    const cursor = list.cursor
+    const truncated = list.truncated ?? false
+    const newCursor = list.cursor
     const objs = list.objects
-    const urls = objs.map(it => {
-        return <ImgItem> {
-            url: `${env.BASE_URL}/rest/${it.key}`,
-            key: it.key,
-            size: it.size
-        }
-    })
+    const urls = objs.map(it => ({
+        url: `${env.BASE_URL}/rest/${it.key}`,
+        key: it.key,
+        size: it.size,
+    }))
+
     return json(Ok(<ImgList>{
         list: urls,
         next: truncated,
-        cursor: cursor,
-        prefixes: list.delimitedPrefixes
+        cursor: newCursor,
+        prefixes: list.delimitedPrefixes,
     }))
 })
 
@@ -127,7 +120,7 @@ router.post('/upload',  auth, async (req: Request, env : Env) => {
 router.post("/folder",  auth, async (req: Request, env: Env) => {
     try {
         const data = await req.json() as Folder
-        const regx = /^[A-Za-z_]+$/
+        const regx = /^[A-Za-z0-9_]+$/
         if (!regx.test(data.name)) {
             return json(Fail("Folder name error"))
         }

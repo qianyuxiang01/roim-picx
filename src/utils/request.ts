@@ -49,7 +49,10 @@ request.interceptors.response.use(
 	}
 )
 
-export const requestListImages = (data : ImgReq): Promise<ImgList> => request.post('/rest/list', data)
+export const requestListImages = (data : ImgReq): Promise<ImgList> => {
+    const path = data.delimiter === '/' ? '/rest/list' : `/rest/list/${data.delimiter}`
+    return request.get(path, { params: { limit: data.limit, cursor: data.cursor } })
+}
 export const requestUploadImages = (data: FormData) : Promise<ImgItem[]> => request.post('/rest/upload', data)
 export const createFolder = (data: Folder) => request.post('/rest/folder', data)
 export const checkToken = (data: AuthToken) => request.post('/rest/checkToken', data)

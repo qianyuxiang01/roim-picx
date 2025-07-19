@@ -75,7 +75,7 @@ const addFolder = () => {
   ElMessageBox.prompt('请输入目录名称，仅支持英文名称', '新增目录', {
     confirmButtonText: '创建',
     cancelButtonText: '取消',
-    inputPattern: /^[A-Za-z_]+$/,
+    inputPattern: /^[A-Za-z0-9_]+$/,
     inputErrorMessage: '无效的目录名称',
   }).then(({ value }) => {
     loading.value = true

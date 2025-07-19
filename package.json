@@ -5,6 +5,7 @@
 		"dev": "vite",
 		"build": "vite build",
 		"dev:worker": "wrangler pages dev ./public --kv=XK --r2=PICX",
+		"dev:worker:debug": "node --inspect-brk ./node_modules/wrangler/bin/wrangler.js pages dev ./public",
 		"preview": "vite preview"
 	},
 	"dependencies": {
