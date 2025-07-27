@@ -45,7 +45,7 @@ router.post('/checkToken', async (req : Request, env : Env) => {
 })
 
 // list image
-router.post('/list', auth, async (req : Request, env : Env) => {
+router.post('/list', async (req : Request, env : Env) => {
     const data = await req.json() as ImgReq
     if (!data.limit) {
         data.limit = 10
@@ -135,7 +135,7 @@ router.post("/folder",  auth, async (req: Request, env: Env) => {
 })
 
 // 删除key
-router.get('/del/:id+', async (req : Request, env: Env) => {
+router.get('/del/:id+', auth, async (req : Request, env: Env) => {
     const key = req.params.id
     if (!key) {
         return json(Fail("not delete key"))
