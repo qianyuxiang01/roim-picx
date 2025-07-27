@@ -123,7 +123,7 @@ router.post('/upload',  auth, async (req: Request, env : Env) => {
 router.post("/folder",  auth, async (req: Request, env: Env) => {
     try {
         const data = await req.json() as Folder
-        const regx = /^[A-Za-z_]+$/
+        const regx = /^[A-Za-z_0-9]+$/
         if (!regx.test(data.name)) {
             return json(Fail("Folder name error"))
         }
