@@ -19,11 +19,16 @@
       </div>
 		</div>
     <div class="my-2 flex items-center justify-start flex-wrap">
-      <div v-for="it in prefixes" class="px-4 py-2 items-center flex rounded-lg bg-white shadow-md cursor-pointer mx-1" @click="changeFolder(it)">
+      <router-link
+        v-for="it in prefixes"
+        :key="it"
+        :to="it === '/' ? '/' : `/${it.replace(/\/$/, '')}`"
+        class="px-4 py-2 items-center flex rounded-lg bg-white shadow-md cursor-pointer mx-1"
+      >
         <font-awesome-icon :icon="faFolder" class="text-3xl text-amber-500" />
         <span v-if="it !== '/'" class="pl-2 text-gray-600"> {{ it.replace("/", "") }}</span>
-        <span v-else class="pl-2 text-gray-600"> {{ it }}</span>
-      </div>
+        <span v-else class="pl-2 text-gray-600">根目录</span>
+      </router-link>
     </div>
 		<div class="grid gap-2 lg:gap-4 lg:grid-cols-4 grid-cols-2">
 			<transition-group name="el-fade-in-linear">
@@ -49,12 +54,16 @@
 import { requestListImages, requestDeleteImage, createFolder } from '../utils/request'
 import LoadingOverlay from '../components/LoadingOverlay.vue'
 import formatBytes from '../utils/format-bytes'
-import { computed, onMounted, ref } from 'vue'
+import { computed, watch, ref } from 'vue'
 import type { ImgItem, ImgReq, Folder } from '../utils/types'
 import ImageBox from '../components/ImageBox.vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import { faRedoAlt, faFolder, faFolderPlus } from '@fortawesome/free-solid-svg-icons'
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
+
+const props = defineProps<{
+  folderName?: string | string[]
+}>()
 
 const loading = ref(false)
 const delimiter = ref('/')
@@ -63,11 +72,17 @@ const prefixes = ref<String[]>([])
 const imagesTotalSize = computed(() =>
     uploadedImages.value.reduce((total, item) => total + item.size, 0)
 )
-const changeFolder = (path : string) => {
-  console.log(path)
-  delimiter.value = path
-  listImages()
-}
+
+watch(
+  () => props.folderName,
+  (newFolderName) => {
+    const folderPath = Array.isArray(newFolderName) ? newFolderName.join('/') : newFolderName
+    delimiter.value = folderPath ? `${folderPath}/` : '/'
+    listImages()
+  },
+  { immediate: true }
+)
+
 const addFolder = () => {
   ElMessageBox.prompt('请输入目录名称，仅支持英文名称', '新增目录', {
     confirmButtonText: '创建',
@@ -93,7 +108,7 @@ const listImages = () => {
 	loading.value = true
 	requestListImages(<ImgReq> {
     limit: 100,
-    delimiter: delimiter.value
+    delimiter: delimiter.value === '/' ? '' : delimiter.value
   }).then((data) => {
     uploadedImages.value = data.list
     if (data.prefixes && data.prefixes.length) {
@@ -109,10 +124,6 @@ const listImages = () => {
 			loading.value = false
 		})
 }
-
-onMounted(() => {
-	listImages()
-})
 
 const deleteImage = (src: string) => {
 	requestDeleteImage({

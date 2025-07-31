@@ -4,8 +4,10 @@ const router = createRouter({
 	history: createWebHistory(),
 	routes: [
 		{
-			path: '/',
-			component: () => import('../views/ManageImages.vue')
+			path: '/:folderName*',
+			name: 'manage',
+			component: () => import('../views/ManageImages.vue'),
+			props: true
 		},
 		{
 			path: '/up',
